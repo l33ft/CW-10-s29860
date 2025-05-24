@@ -49,34 +49,29 @@ namespace TripApi.Services
 
         public async Task<string> AssignClientToTripAsync(int tripId, AssignClientToTripDto dto)
         {
-            // Sprawdź czy klient o takim PESEL już istnieje
             var existingClient = await _clientRepository.GetClientByPeselAsync(dto.Pesel);
             if (existingClient != null)
             {
                 return "Klient o podanym numerze PESEL już istnieje";
             }
 
-            // Sprawdź czy klient jest już zapisany na daną wycieczkę
             var isAlreadyRegistered = await _clientRepository.ClientRegisteredForTripAsync(dto.Pesel, tripId);
             if (isAlreadyRegistered)
             {
                 return "Klient jest już zapisany na tę wycieczkę";
             }
 
-            // Sprawdź czy wycieczka istnieje
             var trip = await _tripRepository.GetTripByIdAsync(tripId);
             if (trip == null)
             {
                 return "Wycieczka nie istnieje";
             }
 
-            // Sprawdź czy data rozpoczęcia jest w przyszłości
             if (trip.DateFrom <= DateTime.Now)
             {
                 return "Nie można zapisać się na wycieczkę, która już się odbyła";
             }
 
-            // Dodaj nowego klienta
             var newClient = new Client
             {
                 FirstName = dto.FirstName,
@@ -88,7 +83,6 @@ namespace TripApi.Services
 
             var addedClient = await _clientRepository.AddClientAsync(newClient);
 
-            // Przypisz klienta do wycieczki
             var clientTrip = new ClientTrip
             {
                 IdClient = addedClient.IdClient,
